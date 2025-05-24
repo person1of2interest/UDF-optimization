@@ -45,14 +45,14 @@ CREATE FUNCTION dbo.F_WORKITEM_COUNTS_BY_COMPLETION (
 RETURNS TABLE
 AS
 RETURN
-SELECT
-    wi.Id_Work,
-    COUNT(*) AS ItemCount
-FROM dbo.WorkItem wi
-LEFT JOIN dbo.Analiz a ON wi.ID_ANALIZ = a.ID_ANALIZ
-WHERE wi.Is_Complit = @is_complit
-    AND a.Is_Group = 0
-GROUP BY wi.Id_Work;
+    SELECT
+        wi.Id_Work,
+        COUNT(*) AS ItemCount
+    FROM dbo.WorkItem wi
+    LEFT JOIN dbo.Analiz a ON wi.ID_ANALIZ = a.ID_ANALIZ
+    WHERE wi.Is_Complit = @is_complit
+        AND a.Is_Group = 0
+    GROUP BY wi.Id_Work;
 
 CREATE FUNCTION dbo.F_WORKS_LIST_NEW_2()
 RETURNS TABLE
