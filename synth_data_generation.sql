@@ -1,7 +1,7 @@
 -- Вставляем 1000 сотрудникков
 WITH Numbers AS (
     SELECT TOP (1000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
-    FROM master.dbo.spt_values
+    FROM sys.all_objects
 )
 INSERT INTO [dbo].[Employee] ([LOGIN_NAME], [SURNAME], [NAME], [PATRONYMIC])
 SELECT 
@@ -25,10 +25,10 @@ VALUES
 -- Вставляем 50000 заказов
 WITH Numbers AS (
     SELECT TOP (50000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
-    FROM master.dbo.spt_values a
-    CROSS JOIN master.dbo.spt_values b
+    FROM sys.all_objects a
+    CROSS JOIN sys.all_objects b
 )
-INSERT INTO [dbo].[Works] (
+INSERT INTO [dbo].[Works] WITH (TABLOCK) (
     [CREATE_Date], 
     [MaterialNumber], 
     [IS_Complit], 
@@ -45,15 +45,16 @@ SELECT
     DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 3650), '2010-01-01'),  -- случайная CREATE_Date между 2010-м и 2020-м
     CAST(ROUND((ABS(CHECKSUM(NEWID())) % 100000) / 100.0, 2) AS DECIMAL(8, 2)),  -- случайный MaterialNumber
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN 1 ELSE 0 END,  -- случайный статус IS_Complit (0 или 1)
-    CONCAT('Employee ', (ABS(CHECKSUM(NEWID())) % 1000) + 1),  -- случайное FIO
-    (ABS(CHECKSUM(NEWID())) % 1000) + 1,  -- случайный Id_Employee (ссылается на Employee)
+    CONCAT(e.Surname, ' ', e.Name, ' ', e.Patronymic),  -- конкатенация фамилии, имени и отчества
+    e.Id_Employee,
     (ABS(CHECKSUM(NEWID())) % 5) + 1,  -- случайный StatusId (от 1 до 5-ти, ссылается на WorkStatus)
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 30), GETDATE()) ELSE NULL END,  -- случайная Print_Date или NULL
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 30), GETDATE()) ELSE NULL END,  -- случайная SendToClientDate или NULL
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 30), GETDATE()) ELSE NULL END,  -- случайная SendToDoctorDate или NULL
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 30), GETDATE()) ELSE NULL END,  -- случайная SendToOrgDate или NULL
     CASE WHEN (ABS(CHECKSUM(NEWID())) % 2) = 0 THEN DATEADD(DAY, (ABS(CHECKSUM(NEWID())) % 30), GETDATE()) ELSE NULL END   -- случайная SendToFax или NULL
-FROM Numbers;
+FROM Numbers n
+JOIN [dbo].[Employee] e ON e.Id_Employee = (SELECT TOP 1 Id_Employee FROM [dbo].[Employee] ORDER BY NEWID());  -- случайный Id_Employee (ссылается на Employee)
 
 
 -- Вставляем виды анализов
@@ -76,7 +77,7 @@ VALUES
 ('Type5');
 
 
--- Вставляем 50000 WorkItem'ов
+-- Вставляем WorkItem'ы (от 1-го до 5-ти для каждого заказа)
 WITH WorkPool AS (
     SELECT Id_Work
     FROM dbo.Works
