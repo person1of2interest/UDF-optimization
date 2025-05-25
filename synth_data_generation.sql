@@ -96,8 +96,8 @@ Expanded AS (
         SELECT TOP (rc.ItemCount) 1 AS some_column FROM master.dbo.spt_values WHERE type = 'P'
     ) filler
 ),
-Limited AS (
-    SELECT TOP (50000)
+FullTable AS (
+    SELECT
         Id_Work,
         ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
     FROM Expanded
@@ -127,7 +127,7 @@ SELECT
     (n / 3) % 2,  -- Is_NormTextPrint
     CAST(ROUND((n % 1000) / 10.0, 2) AS DECIMAL(8, 2)),  -- Price
     (n % 5) + 1  -- Id_SelectType
-FROM Limited;
+FROM FullTable;
 
 
 -- Случайные 7% заказов отменяем
